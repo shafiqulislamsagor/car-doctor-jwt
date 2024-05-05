@@ -27,11 +27,12 @@ const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, currentUser => {
+            const UserEmail = currentUser?.email || user?.email
+            const UserLogged = {email:UserEmail}
             setUser(currentUser);
             console.log('current user', currentUser);
             setLoading(false);
             if(currentUser){
-                const UserLogged = {email:currentUser.email}
                 // console.log(UserLogged);
                 try{
                     axios.post('http://localhost:5000/jwt',UserLogged,{withCredentials:true})
@@ -42,11 +43,22 @@ const AuthProvider = ({ children }) => {
                 catch(error){
                     console.log('not work jwt server post',error.message);
                 }
+            }else{
+                try{
+                    axios.post('http://localhost:5000/logout',UserLogged,{withCredentials:true})
+                    .then(res=>{
+                        console.log(res.data);
+                    })
+                }
+                catch(error){
+                    console.log(error.message);
+                }
             }
         });
         return () => {
             return unsubscribe();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const authInfo = {

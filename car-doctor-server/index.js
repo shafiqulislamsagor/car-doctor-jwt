@@ -7,7 +7,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:5173'
+    ],
+    credentials:true
+}));
 app.use(express.json());
 
 
@@ -36,7 +41,18 @@ async function run() {
         app.post('/jwt',async(req,res)=>{
             const user = req.body;
             const result =  jwt.sign(user,process.env.ACCESS_TOKEN,{expiresIn:'1h'})
-            res.send({result})
+            res.cookie('token',result,{
+                secure:true,
+                sameSite:'none',
+                httpOnly:true
+            })
+            res.send({Success: true})
+        })
+
+
+        app.post('/logout',async(req,res)=>{
+            const body = req.body
+            res.clearCookie('token',{maxAge:0}).send({Success:true})
         })
 
 
