@@ -1,11 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../providers/AuthProvider";
 import BookingRow from "./BookingRow";
-import axios from "axios";
+// import axios from "axios";
+import useAxios from "../../hooks/useAxios";
 
 const Bookings = () => {
     const { user } = useContext(AuthContext);
     const [bookings, setBookings] = useState([]);
+    const axioxSecure = useAxios()
 
     // const url = `http://localhost:5000/bookings?email=${user?.email}`;
     useEffect(() => {
@@ -13,9 +15,12 @@ const Bookings = () => {
         //     .then(res => res.json())
         //     .then(data => setBookings(data))
         // const email = user?.email
-            axios(`http://localhost:5000/bookings?email=${user?.email}`,{withCredentials:true})
+            // axios(`http://localhost:5000/bookings?email=${user?.email}`,{withCredentials:true})
+            // .then(res=> setBookings(res.data))
+
+            axioxSecure.get(`/bookings?email=${user?.email}`)
             .then(res=> setBookings(res.data))
-    }, [user.email]);
+    }, [axioxSecure,user?.email]);
 
     const handleDelete = id => {
         const proceed = confirm('Are You sure you want to delete');
