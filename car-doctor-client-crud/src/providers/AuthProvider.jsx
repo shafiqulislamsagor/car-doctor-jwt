@@ -29,11 +29,12 @@ const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, currentUser => {
             const UserEmail = currentUser?.email || user?.email
             const UserLogged = {email:UserEmail}
+            // console.log(UserLogged);
             setUser(currentUser);
             console.log('current user', currentUser);
             setLoading(false);
             if(currentUser){
-                // console.log(UserLogged);
+                console.log(UserLogged);
                 try{
                     axios.post('http://localhost:5000/jwt',UserLogged,{withCredentials:true})
                 .then(res=> {

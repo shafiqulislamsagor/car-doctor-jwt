@@ -12,7 +12,7 @@ app.use(cors({
     origin: [
         'http://localhost:5173'
     ],
-    credentials:true
+    credentials: true
 }));
 app.use(express.json());
 app.use(cookiesParser())
@@ -32,13 +32,23 @@ const client = new MongoClient(uri, {
 });
 
 // middlewares customs logger and verified
-const logger = (req,res,next)=>{
-    next()
-}
-const verifyToken = (req,res,next)=>{
+// const logger = (req, res, next) => {
+//     console.log('logger');
+//     next()
+// }
+const verifyToken = (req, res, next) => {
     const token = req?.cookies?.token
-    console.log(token);
-    next()
+    // console.log(token,"verify");
+    if (!token) {
+        return res.status(401).send({ message: 'Unauthorized Access' })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err,decoded)=>{
+        if(err){
+            return res.status(401).send({message:'Unauthorized Access..!'})
+        }
+        req.email = decoded
+        next()
+    });
 }
 
 async function run() {
@@ -49,23 +59,26 @@ async function run() {
         const serviceCollection = client.db('carDoctor').collection('services');
         const bookingCollection = client.db('carDoctor').collection('bookings');
 
-        app.post('/jwt',logger,verifyToken,async(req,res)=>{
+        app.post('/jwt',  async (req, res) => {
             const user = req.body;
-            const cookies = req.cookies
+            // console.log(user);
+            // console.log(req.email.email)
+            // const cookies = req.email
             // console.log(cookies);
-            const result =  jwt.sign(user,process.env.ACCESS_TOKEN,{expiresIn:'1h'})
-            res.cookie('token',result,{
-                secure:true,
-                sameSite:'none',
-                httpOnly:true
+            // console.log(req.email);
+            const result = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
+            res.cookie('token', result, {
+                secure: true,
+                sameSite: 'none',
+                httpOnly: true
             })
-            res.send({Success: true})
+            res.send({ Success: true })
         })
 
 
-        app.post('/logout',async(req,res)=>{
+        app.post('/logout', async (req, res) => {
             const body = req.body
-            res.clearCookie('token',{maxAge:0}).send({Success:true})
+            res.clearCookie('token', { maxAge: 0 }).send({ logout: true })
         })
 
 
@@ -91,13 +104,20 @@ async function run() {
 
 
         // bookings 
-        app.get('/bookings', async (req, res) => {
+        app.get('/bookings',verifyToken, async (req, res) => {
             console.log(req.query.email);
+            console.log(req.email.email);
+            if(req.query.email !== req.email.email){
+                // console.log('hi');
+                return res.status(403).send({error:'Not access'})
+            }
+            // console.log('hlw');
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }
             }
             const result = await bookingCollection.find(query).toArray();
+            // console.log(result);
             res.send(result);
         })
 
